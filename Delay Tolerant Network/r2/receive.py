@@ -2,14 +2,20 @@
 import socket
 import struct
 import sys
+import json
 import pickle
 import ast
+import time
 
-#perak surabaya
+#gresik
+from pip._vendor.distlib.compat import raw_input
+
+lat_to = -7.155029
+long_to = 112.572189
+
 port = 10002
-lat_to = -7.228549
-long_to = 112.731391
-
+limit_time = 30
+hop_limit = 1
 pesanDikirim = []
 
 def sendPosition():
@@ -22,7 +28,7 @@ def sendPosition():
         'long' : long_to
     }
     client.send(pickle.dumps(data))
-    print ('sukses mengirim lokasi !')
+    print('sukses mengirim lokasi !')
     return client.close()
 
 def multicast():
@@ -34,39 +40,60 @@ def multicast():
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     while True:
-        print ('\nwaiting to receive message', file = sys.stderr)
+        print('\nwaiting to receive message')
         data, address = sock.recvfrom(1024)
-        
-        print ('received %s bytes from %s' % (len(data), address), file = sys.stderr)
-        data = ast.literal_eval(data)
-
+        data = json.loads(data.decode('utf-8'))
+        print('received %s bytes from %s' % (len(data), address))
+        print(data)
         pesan = data[0]
-        print ('isi pesan : ' + pesan)
+        print('isi pesan : ' + pesan)
 
-        if not data[1]:
-            endReceiver()
-        
         rute = data[1]
 
-        print (f'sending acknowledgement to {address}', file = sys.stderr)
-        sock.sendto('ack', address)
+        hop = data[2] + 1
+        
+        getSecond = time.time() - data[3]
+        timestamp = time.time()
 
-        print ('pengiriman selanjutnya ke port ' + str(rute[0][0]))
-        sendData(pesan,rute)
+        duration = data[4] + getSecond
 
-def endReceiver():
-    print ('ini adalah rute DTN terakhir')
-    exit()
 
-def sendData(pesan,rute):
+        print('sending acknowledgement to', address)
+        sock.sendto(b'ack', address)
+
+        if(getSecond > limit_time):
+            print('telah melebihi limit waktu')
+            exit()
+        
+        if(data[2] > hop_limit):
+            print('jumlah hop : ' + str(hop))
+            print('hop telah melebihi limit')
+            exit()
+
+        if not data[1]:
+            sock.sendto('ack', address)
+            print('ini adalah rute DTN terakhir')
+            print('durasi pengiriman pesan : ' + str(data[4]))
+            print('jumlah hop : ' + str(data[2]))
+            exit()
+
+        print('pengiriman selanjutnya ke port ' + str(rute[0][0]))
+        sendData(pesan,rute,hop,timestamp,duration)
+
+def sendData(pesan,rute,hop,timestamp,duration):
     p = rute[0][0]
     del rute[0]
     pesanDikirim.insert(0,pesan)
     pesanDikirim.insert(1,rute)
+    pesanDikirim.insert(2,hop)
+    pesanDikirim.insert(3,timestamp)
+    pesanDikirim.insert(4,duration)
     hasil = send(pesanDikirim, p)
+    print ('mengirimkan pesan ke port ' + str(p))
     while(hasil == 0):
         hasil = send(pesanDikirim, p)
     print ('pengiriman berhasil ke port ' + str(p))
+    exit()
 
 def send(message,port):
     multicast_group = ('224.3.29.71', port)
@@ -74,13 +101,12 @@ def send(message,port):
     sock.settimeout(0.2)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-    print ('mengirimkan pesan ke port ' + str(port))
-    sock.sendto(str(message), multicast_group)
+    print(json.dumps(message).encode('utf8'))
+    sock.sendto(json.dumps(message).encode('utf8'), multicast_group)
     while True:
         try:
             sock.recvfrom(16)
         except:
-            print ('tidak ada respon dari port %s' % port)
             sock.close()
             return 0
         else:
@@ -89,13 +115,13 @@ def send(message,port):
             return 1
 
 if __name__ == '__main__':
-    print ("receiver port " + str(port) + ": ")
-    print ("==============")
+    print("receiver port " + str(port) + ": ")
+    print("==============")
     while 1:
-        print ("1. mengirimkan posisi ke sender")
-        print ("2. menerima data dan mengirimkan ke alamat selanjutnya")
-        print ("3. keluar")
-        inputan = input('Pilihan > ')
+        print("1. mengirimkan posisi ke sender")
+        print("2. menerima data dan mengirimkan ke alamat selanjutnya")
+        print("3. keluar")
+        inputan = raw_input('Pilihan > ')
         if(inputan == '1'):
             sendPosition()
         elif(inputan == '2'):
@@ -103,4 +129,4 @@ if __name__ == '__main__':
         elif(inputan == '3'):
             exit()
         else :
-            print ('inputan salah')
+            print('inputan salah')

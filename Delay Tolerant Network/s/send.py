@@ -8,14 +8,18 @@ import pickle
 import glob
 import numpy
 import operator
+import time
+import copy
 from geopy.distance import geodesic
 
 #keputih sukolilo
-lat_from = -7.294080
-long_from = 112.801598
+from pip._vendor.distlib.compat import raw_input
+
+
 
 pesanDikirim = []
 portDistance = []
+portDistance_temp = []
 
 def getLatLong():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,11 +40,19 @@ def getLatLong():
     server.close()
 
 def sendDataInput():
-    message = input("input pesan > ")
+    message = raw_input("input pesan > ")
     p = portDistance[0][0]
     del portDistance[0]
+
     pesanDikirim.insert(0,message)
     pesanDikirim.insert(1,portDistance)
+    # hop
+    pesanDikirim.insert(2,0)
+    pesanDikirim.insert(3,time.time())
+    # durasi kirim
+    pesanDikirim.insert(4,0)
+
+    print ('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
     while(hasil == 0):
         hasil = send(pesanDikirim, p)
@@ -52,13 +64,12 @@ def send(message,port):
     sock.settimeout(0.2)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-    print ('mengirimkan pesan ke port ' + str(port))
-    sock.sendto(str(message), multicast_group)
+    print(json.dumps(message).encode('utf8'))
+    sock.sendto(json.dumps(message).encode('utf8'), multicast_group)
     while True:
         try:
             sock.recvfrom(16)
         except:
-            print ('tidak ada respon dari port %s' % port)
             sock.close()
             return 0
         else:
@@ -83,8 +94,8 @@ def getUrutan():
         file_open = open(filename, 'r')
         nama_file_temp = int(filename[4:9])
         jarak_temp = float(file_open.read())
-        portDistance.append([nama_file_temp,jarak_temp])
-    return sorted(portDistance, key=operator.itemgetter(1), reverse=False)
+        portDistance_temp.append([nama_file_temp,jarak_temp])
+    return sorted(portDistance_temp, key=operator.itemgetter(1), reverse=False)
     
 if __name__ == '__main__':
     print ("sender multicast dtn")
@@ -93,12 +104,12 @@ if __name__ == '__main__':
         print ("2. mengurutkan urutan pengiriman ke receiver")
         print ("3. menjalankan pengiriman data")
         print ("4. keluar")
-        pilihan = input("Pilihan > ")
+        pilihan = raw_input("Pilihan > ")
         if(pilihan == '1'):
             getLatLong()
         elif(pilihan == '2'):
-            ngurut = getUrutan()
-            print (ngurut)
+            portDistance = copy.deepcopy(getUrutan())
+            print(portDistance)
         elif(pilihan == '3'):
             sendDataInput()
         elif(pilihan == '4'):
