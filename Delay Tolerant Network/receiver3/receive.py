@@ -6,8 +6,8 @@ import pickle
 import json
 import ast
 import time
+import os
 
-#mulyosari surabaya
 from pip._vendor.distlib.compat import raw_input
 
 lat_to = -7.265441
@@ -15,7 +15,7 @@ long_to = 112.797661
 
 
 port = 10003
-limit_time = 30
+time_limit = 5
 hop_limit = 1
 pesanDikirim = []
 
@@ -41,42 +41,30 @@ def multicast():
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     while True:
-        print ('\nwaiting to receive message')
+        print('\nwaiting to receive message')
         data, address = sock.recvfrom(1024)
         data = json.loads(data.decode('utf-8'))
-        print ('received %s bytes from %s' % (len(data), address))
-        print(data)
+        print('received %s bytes from %s' % (len(data), address))
         pesan = data[0]
-        print('isi pesan : ' + pesan)
-        
+        print('message : ' + pesan)
         rute = data[1]
         hop = data[2] + 1
-        
         getSecond = time.time() - data[3]
         timestamp = time.time()
-
         duration = data[4] + getSecond
-
-        print('sending acknowledgement to', address)
+        print ('sending acknowledgement to', address)
         sock.sendto(b'ack', address)
-
-        if(getSecond > limit_time):
-            print('telah melebihi limit waktu')
-            exit()
-        
         if(data[2] > hop_limit):
             print('jumlah hop : ' + str(hop))
             print('hop telah melebihi limit')
             exit()
-
         if not data[1]:
             sock.sendto(b'ack', address)
-            print('ini adalah rute DTN terakhir')
-            print('durasi pengiriman pesan : ' + str(data[4]))
-            print('jumlah hop : ' + str(data[2]))
+            print ('ini adalah rute DTN terakhir')
+            print ('durasi pengiriman pesan : ' + str(data[4]))
+            print ('jumlah hop : ' + str(data[2]))
             exit()
 
-        print('pengiriman selanjutnya ke port ' + str(rute[0][0]))
         sendData(pesan,rute,hop,timestamp,duration)
 
 def sendData(pesan,rute,hop,timestamp,duration):
@@ -87,12 +75,21 @@ def sendData(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(2,hop)
     pesanDikirim.insert(3,timestamp)
     pesanDikirim.insert(4,duration)
+    settime = time.time()
+    timecek = 0
+    print('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
-    print ('mengirimkan pesan ke port ' + str(p))
-    while(hasil == 0):
-        hasil = send(pesanDikirim, p)
-    print ('pengiriman berhasil ke port ' + str(p))
-    exit()
+    while (timecek < time_limit):
+        if hasil == 0:
+            hasil = send(pesanDikirim, p)
+        else:
+            print('pengiriman berhasil ke port ' + str(p))
+            break
+        timecek = time.time() - settime
+    if hasil == 0:
+        print('Umur pesan melebihi batas waktu, pesan akan dihapus\n')
+    else:
+        exit()
 
 def send(message,port):
     multicast_group = ('224.3.29.71', port)
@@ -100,7 +97,6 @@ def send(message,port):
     sock.settimeout(0.2)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-    print(json.dumps(message).encode('utf8'))
     sock.sendto(json.dumps(message).encode('utf8'), multicast_group)
     while True:
         try:
@@ -116,16 +112,16 @@ def send(message,port):
 if __name__ == '__main__':
     print("receiver port " + str(port) + ": ")
     print("==============")
+    path = "../sender/log/"
+    if not os.path.isfile(os.path.join(path, str(port) + ".txt")):
+        sendPosition()
     while 1:
-        print("1. mengirimkan posisi ke sender")
-        print("2. menerima data dan mengirimkan ke alamat selanjutnya")
-        print("3. keluar")
+        print("1. menerima data dan mengirimkan ke alamat selanjutnya")
+        print("2. keluar")
         inputan = raw_input('Pilihan > ')
         if(inputan == '1'):
-            sendPosition()
-        elif(inputan == '2'):
             multicast()
-        elif(inputan == '3'):
+        elif(inputan == '2'):
             exit()
         else :
             print('inputan salah')

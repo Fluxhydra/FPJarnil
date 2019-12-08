@@ -10,13 +10,14 @@ import numpy
 import operator
 import time
 import copy
+import array
 from geopy.distance import geodesic
 
-#keputih sukolilo
 from pip._vendor.distlib.compat import raw_input
 
-
-
+lat_from = -7.294080
+long_from = 112.801598
+time_limit = 3
 pesanDikirim = []
 portDistance = []
 portDistance_temp = []
@@ -27,7 +28,8 @@ def getLatLong():
     port = 35
     server.bind((ip, port))
     server.listen(5)
-    print ('menunggu mendapatkan posisi receiver')
+    count=0
+    print('menunggu mendapatkan posisi receiver')
     (client_socket, address) = server.accept()
     data = pickle.loads(client_socket.recv(1024))
     print ("========")
@@ -37,12 +39,12 @@ def getLatLong():
     print (data['long'])
     print ("========")
     writeDistance(data['port'],getDistance(data['lat'],data['long']))
+    count=count+1
     server.close()
 
 def sendDataInput():
     message = raw_input("input pesan > ")
     p = portDistance[0][0]
-    del portDistance[0]
 
     pesanDikirim.insert(0,message)
     pesanDikirim.insert(1,portDistance)
@@ -51,12 +53,20 @@ def sendDataInput():
     pesanDikirim.insert(3,time.time())
     # durasi kirim
     pesanDikirim.insert(4,0)
-
-    print ('mengirimkan pesan ke port ' + str(p))
+    settime = time.time()
+    timecek = 0
+    print('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
-    while(hasil == 0):
-        hasil = send(pesanDikirim, p)
-    print ('pengiriman berhasil ke port ' + str(p))
+    while (timecek < time_limit):
+        if hasil == 0:
+            hasil = send(pesanDikirim, p)
+        else:
+            print('pengiriman berhasil ke port ' + str(p))
+            break
+        timecek = time.time() - settime
+    if hasil == 0:
+        print('Umur pesan melebihi batas waktu, pesan akan dihapus\n')
+
 
 def send(message,port):
     multicast_group = ('224.3.29.71', port)
@@ -64,7 +74,6 @@ def send(message,port):
     sock.settimeout(0.2)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-    print(json.dumps(message).encode('utf8'))
     sock.sendto(json.dumps(message).encode('utf8'), multicast_group)
     while True:
         try:
@@ -73,7 +82,6 @@ def send(message,port):
             sock.close()
             return 0
         else:
-            print ('pesan berhasil dikirim')
             sock.close()
             return 1
 
@@ -90,27 +98,30 @@ def writeDistance(port,distance):
 
 def getUrutan():
     path = 'log/'
+    name = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
     for filename in glob.glob(os.path.join(path, '*.txt')):
         file_open = open(filename, 'r')
         nama_file_temp = int(filename[4:9])
         jarak_temp = float(file_open.read())
-        portDistance_temp.append([nama_file_temp,jarak_temp])
-    return sorted(portDistance_temp, key=operator.itemgetter(1), reverse=False)
+        if (len(portDistance) != 3):
+            portDistance.append([nama_file_temp, jarak_temp])
+    return sorted(portDistance, key=operator.itemgetter(1), reverse=False)
     
 if __name__ == '__main__':
     print ("sender multicast dtn")
+    path = 'log/'
+    cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
+    while(cek!=3):
+        getLatLong()
+        cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
+        print(cek)
+    portDistance = copy.deepcopy(getUrutan())
+    print(portDistance)
     while 1:
-        print ("1. mendapatkan semua lot lang dari semua receiver")
-        print ("2. mengurutkan urutan pengiriman ke receiver")
-        print ("3. menjalankan pengiriman data")
-        print ("4. keluar")
+        print ("1. menjalankan pengiriman data")
+        print ("2. keluar")
         pilihan = raw_input("Pilihan > ")
         if(pilihan == '1'):
-            getLatLong()
-        elif(pilihan == '2'):
-            portDistance = copy.deepcopy(getUrutan())
-            print(portDistance)
-        elif(pilihan == '3'):
             sendDataInput()
-        elif(pilihan == '4'):
+        elif(pilihan == '2'):
             exit()
