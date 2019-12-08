@@ -15,14 +15,14 @@ lat_to = -7.228549
 long_to = 112.731391
 
 port = 10001
-time_limit = 5
+time_limit = 10
 hop_limit = 1
 pesanDikirim = []
 
 def sendPosition():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.settimeout(20)
-    client.connect(('127.0.0.1', 35))
+    client.connect(('192.168.100.37', 35))
     data = {
         'port' : port,
         'lat' : lat_to,
@@ -75,7 +75,6 @@ def sendData(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(2,hop)
     pesanDikirim.insert(3,timestamp)
     pesanDikirim.insert(4,duration)
-    pesanDikirim.insert(4, 0)
     settime = time.time()
     timecek = 0
     print('mengirimkan pesan ke port ' + str(p))
@@ -113,16 +112,16 @@ def send(message,port):
 if __name__ == '__main__':
     print("receiver port " + str(port) + ": ")
     print("==============")
-    path="../sender/location/"
-    if not os.path.isfile(os.path.join(path,str(port)+".txt")):
-        sendPosition()
     while 1:
-        print("1. menerima pesan dan mengirimkan ke node selanjutnya")
-        print("2. keluar")
+        print("1. send lokasi")
+        print("2. menerima pesan dan mengirimkan ke node selanjutnya")
+        print("3. keluar")
         inputan = raw_input('Pilihan > ')
         if (inputan == '1'):
-            multicast()
+            sendPosition()
         elif (inputan == '2'):
+            multicast()
+        elif (inputan == '3'):
             exit()
         else:
             print('inputan salah')

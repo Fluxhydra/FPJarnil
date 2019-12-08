@@ -14,14 +14,14 @@ lat_to = -7.155029
 long_to = 112.572189
 
 port = 10002
-time_limit = 5
-hop_limit = 1
+time_limit = 10
+hop_limit = 4
 pesanDikirim = []
 
 def sendPosition():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.settimeout(20)
-    client.connect(('127.0.0.1', 35))
+    client.connect(('192.168.100.37', 35))
     data = {
         'port' : port,
         'lat' : lat_to,
@@ -51,7 +51,6 @@ def multicast():
         getSecond = time.time() - data[3]
         timestamp = time.time()
         duration = data[4] + getSecond
-        print ('sending acknowledgement to', address)
         sock.sendto(b'ack', address)
         if(data[2] > hop_limit):
             print('jumlah hop : ' + str(hop))
@@ -64,9 +63,9 @@ def multicast():
             print ('jumlah hop : ' + str(data[2]))
             exit()
 
-        sendData(pesan,rute,hop,timestamp,duration)
+        sendMsg(pesan,rute,hop,timestamp,duration)
 
-def sendData(pesan,rute,hop,timestamp,duration):
+def sendMsg(pesan,rute,hop,timestamp,duration):
     p = rute[0][0]
     del rute[0]
     pesanDikirim.insert(0,pesan)
@@ -74,7 +73,6 @@ def sendData(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(2,hop)
     pesanDikirim.insert(3,timestamp)
     pesanDikirim.insert(4,duration)
-    pesanDikirim.insert(4, 0)
     settime = time.time()
     timecek = 0
     print('mengirimkan pesan ke port ' + str(p))
@@ -83,7 +81,6 @@ def sendData(pesan,rute,hop,timestamp,duration):
         if hasil == 0:
             hasil = send(pesanDikirim, p)
         else:
-            print('pengiriman berhasil ke port ' + str(p))
             break
         timecek = time.time() - settime
     if hasil == 0:
@@ -112,16 +109,16 @@ def send(message,port):
 if __name__ == '__main__':
     print("receiver port " + str(port) + ": ")
     print("==============")
-    path = "../sender/location/"
-    if not os.path.isfile(os.path.join(path, str(port) + ".txt")):
-        sendPosition()
     while 1:
-        print("1. menerima data dan mengirimkan ke alamat selanjutnya")
-        print("2. keluar")
+        print("1. send lokasi")
+        print("2. menerima pesan dan mengirimkan ke node selanjutnya")
+        print("3. keluar")
         inputan = raw_input('Pilihan > ')
         if (inputan == '1'):
-            multicast()
+            sendPosition()
         elif (inputan == '2'):
+            multicast()
+        elif (inputan == '3'):
             exit()
         else:
             print('inputan salah')

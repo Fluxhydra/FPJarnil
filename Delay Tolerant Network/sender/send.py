@@ -17,7 +17,7 @@ from pip._vendor.distlib.compat import raw_input
 
 lat_from = -7.294080
 long_from = 112.801598
-time_limit = 3
+time_limit = 10
 pesanDikirim = []
 portDistance = []
 portDistance_temp = []
@@ -28,24 +28,32 @@ def getLatLong():
     port = 35
     server.bind((ip, port))
     server.listen(5)
-    count=0
     print('menunggu mendapatkan posisi receiver')
     (client_socket, address) = server.accept()
     data = pickle.loads(client_socket.recv(1024))
-    print ("========")
-    print ("mendapatkan titik lat long dari receiver port " + str(data['port']))
-    print ("isi data :")
-    print (data['lat'])
-    print (data['long'])
-    print ("========")
-    writeDistance(data['port'],getDistance(data['lat'],data['long']))
-    count=count+1
-    server.close()
+    if cekLokasi(str(data['port'])) == "0":
+        print ("========")
+        print ("mendapatkan titik lat long dari receiver port " + str(data['port']))
+        print ("isi data :")
+        print (data['lat'])
+        print (data['long'])
+        print ("========")
+        writeDistance(data['port'],getDistance(data['lat'],data['long']))
+        server.close()
+    elif cek:
+        server.close()
+
+def cekLokasi(lok):
+    if os.path.isfile(os.path.join(path, str(lok) + ".txt")):
+        return "1"
+    else:
+        return "0"
+
 
 def sendDataInput():
     message = raw_input("input pesan > ")
     p = portDistance[0][0]
-
+    del portDistance[0]
     pesanDikirim.insert(0,message)
     pesanDikirim.insert(1,portDistance)
     # hop
@@ -101,7 +109,7 @@ def getUrutan():
     name = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
     for filename in glob.glob(os.path.join(path, '*.txt')):
         file_open = open(filename, 'r')
-        nama_file_temp = int(filename[4:9])
+        nama_file_temp = int(filename[9:14])
         jarak_temp = float(file_open.read())
         if (len(portDistance) != 3):
             portDistance.append([nama_file_temp, jarak_temp])
@@ -111,17 +119,20 @@ if __name__ == '__main__':
     print ("sender multicast dtn")
     path = 'location/'
     cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
-    while(cek!=3):
-        getLatLong()
-        cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
-        print(cek)
-    portDistance = copy.deepcopy(getUrutan())
-    print(portDistance)
     while 1:
-        print ("1. menjalankan pengiriman data")
-        print ("2. keluar")
+        print ("1. get lokasi")
+        print ("2. menjalankan pengiriman data")
+        print ("3. keluar")
         pilihan = raw_input("Pilihan > ")
         if(pilihan == '1'):
+            if cek != 3:
+                getLatLong()
+            else:
+                print("lokasi sudah didapat")
+        elif (pilihan == '2'):
+            portDistance = []
+            portDistance = copy.deepcopy(getUrutan())
+            print(portDistance)
             sendDataInput()
-        elif(pilihan == '2'):
+        elif(pilihan == '3'):
             exit()
