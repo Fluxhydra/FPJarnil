@@ -92,12 +92,12 @@ def getDistance(lat_to,long_to):
     return geodesic(coords_1, coords_2).km
 
 def writeDistance(port,distance):
-    file = open('log/'+str(port)+".txt","w") 
+    file = open('location/'+str(port)+".txt","w")
     file.writelines(str(distance))
     file.close()
 
 def getUrutan():
-    path = 'log/'
+    path = 'location/'
     name = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
     for filename in glob.glob(os.path.join(path, '*.txt')):
         file_open = open(filename, 'r')
@@ -109,7 +109,7 @@ def getUrutan():
     
 if __name__ == '__main__':
     print ("sender multicast dtn")
-    path = 'log/'
+    path = 'location/'
     cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
     while(cek!=3):
         getLatLong()

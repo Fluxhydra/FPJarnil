@@ -113,7 +113,7 @@ def send(message,port):
 if __name__ == '__main__':
     print("receiver port " + str(port) + ": ")
     print("==============")
-    path="../sender/log/"
+    path="../sender/location/"
     if not os.path.isfile(os.path.join(path,str(port)+".txt")):
         sendPosition()
     while 1:
