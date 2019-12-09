@@ -111,12 +111,8 @@ def Sort():
         if (len(portDistance) != 3):
             portDistance.append([nama_file_temp, jarak_temp])
     return sorted(portDistance, key=operator.itemgetter(1), reverse=False)
-    
+
 if __name__ == '__main__':
-    print ("sender multicast dtn")
-    path = 'location/'
-    cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
-    if __name__ == '__main__':
         print("sender multicast dtn")
         path = 'location/'
         cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
