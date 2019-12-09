@@ -28,13 +28,13 @@ def getLocation():
     port = 35
     server.bind((ip, port))
     server.listen(5)
-    print('menunggu mendapatkan posisi receiver')
+    print('Waiting for receiver position data')
     (client_socket, address) = server.accept()
     data = pickle.loads(client_socket.recv(1024))
     if cekLokasi(str(data['port'])) == "0":
         print ("========")
-        print ("mendapatkan titik lat long dari receiver port " + str(data['port']))
-        print ("isi data :")
+        print ("Getting lang lat points from receiver" + str(data['port']))
+        print ("Data: ")
         print (data['lat'])
         print (data['long'])
         print ("========")
@@ -53,29 +53,27 @@ def cekLokasi(lok):
 
 
 def sendMessage():
-    message = raw_input("input pesan > ")
+    message = raw_input("Input > ")
     p = portDistance[0][0]
     del portDistance[0]
     pesanDikirim.insert(0,message)
     pesanDikirim.insert(1,portDistance)
-    # hop
     pesanDikirim.insert(2,0)
     pesanDikirim.insert(3,time.time())
-    # durasi kirim
     pesanDikirim.insert(4,0)
     settime = time.time()
     timecek = 0
-    print('mengirimkan pesan ke port ' + str(p))
+    print('Sending message to port ' + str(p))
     hasil = send(pesanDikirim, p)
     while (timecek < time_limit):
         if hasil == 0:
             hasil = send(pesanDikirim, p)
         else:
-            print('pengiriman berhasil ke port ' + str(p))
+            print('Message sent to port ' + str(p))
             break
         timecek = time.time() - settime
     if hasil == 0:
-        print('Umur pesan melebihi batas waktu, pesan akan dihapus\n')
+        print('Message lifetime limit reached, message will be deleted\n')
 
 
 def send(message,port):
@@ -113,20 +111,21 @@ def Sort():
     return sorted(portDistance, key=operator.itemgetter(1), reverse=False)
 
 if __name__ == '__main__':
-        print("sender multicast dtn")
+        print("[DTN Multicast: Node S]")
+        print("--------------------")
         path = 'location/'
         cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
-        print("1. Dapatkan lokasi receiver")
-        print("2. Jalankan pengiriman pesan")
-        print("3. keluar")
-        print("Masukkan pilihan")
+        print("1. Get receiver location")
+        print("2. Create a new message")
+        print("3. Exit")
         while 1:
+            print("\nYour choice?")
             pilihan = raw_input(">> ")
             if (pilihan == '1'):
                 if cek != 3:
                     getLocation()
                 else:
-                    print("lokasi sudah didapat")
+                    print("Location obtained")
             elif (pilihan == '2'):
                 portDistance = []
                 portDistance = copy.deepcopy(Sort())
@@ -134,11 +133,3 @@ if __name__ == '__main__':
                 sendMessage()
             elif (pilihan == '3'):
                 exit()
-            elif (pilihan == 'help'):
-                print("Pilihan yang tersedia:")
-                print("1. Dapatkan lokasi receiver")
-                print("2. Jalankan pengiriman pesan")
-                print("3. keluar")
-            else:
-                print("Silahkan masukkan pilihan yang tersedia")
-                print("gunakan 'help' untuk melihat daftar pilihan")
