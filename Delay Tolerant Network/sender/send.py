@@ -17,12 +17,12 @@ from pip._vendor.distlib.compat import raw_input
 
 lat_from = -7.294080
 long_from = 112.801598
-time_limit = 10
+time_limit = 30
 pesanDikirim = []
 portDistance = []
 portDistance_temp = []
 
-def getLatLong():
+def getLocation():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ip = "0.0.0.0"
     port = 35
@@ -38,7 +38,9 @@ def getLatLong():
         print (data['lat'])
         print (data['long'])
         print ("========")
-        writeDistance(data['port'],getDistance(data['lat'],data['long']))
+        file = open('location/' + str(data['port']) + ".txt", "w")
+        file.writelines(str(getDistance(data['lat'],data['long'])))
+        file.close()
         server.close()
     elif cek:
         server.close()
@@ -50,7 +52,7 @@ def cekLokasi(lok):
         return "0"
 
 
-def sendDataInput():
+def sendMessage():
     message = raw_input("input pesan > ")
     p = portDistance[0][0]
     del portDistance[0]
@@ -99,12 +101,7 @@ def getDistance(lat_to,long_to):
     coords_2 = (lat_to, long_to)
     return geodesic(coords_1, coords_2).km
 
-def writeDistance(port,distance):
-    file = open('location/'+str(port)+".txt","w")
-    file.writelines(str(distance))
-    file.close()
-
-def getUrutan():
+def Sort():
     path = 'location/'
     name = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
     for filename in glob.glob(os.path.join(path, '*.txt')):
@@ -119,20 +116,33 @@ if __name__ == '__main__':
     print ("sender multicast dtn")
     path = 'location/'
     cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
-    while 1:
-        print ("1. get lokasi")
-        print ("2. menjalankan pengiriman data")
-        print ("3. keluar")
-        pilihan = raw_input("Pilihan > ")
-        if(pilihan == '1'):
-            if cek != 3:
-                getLatLong()
+    if __name__ == '__main__':
+        print("sender multicast dtn")
+        path = 'location/'
+        cek = len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))])
+        print("1. Dapatkan lokasi receiver")
+        print("2. Jalankan pengiriman pesan")
+        print("3. keluar")
+        print("Masukkan pilihan")
+        while 1:
+            pilihan = raw_input(">> ")
+            if (pilihan == '1'):
+                if cek != 3:
+                    getLocation()
+                else:
+                    print("lokasi sudah didapat")
+            elif (pilihan == '2'):
+                portDistance = []
+                portDistance = copy.deepcopy(Sort())
+                print(portDistance)
+                sendMessage()
+            elif (pilihan == '3'):
+                exit()
+            elif (pilihan == 'help'):
+                print("Pilihan yang tersedia:")
+                print("1. Dapatkan lokasi receiver")
+                print("2. Jalankan pengiriman pesan")
+                print("3. keluar")
             else:
-                print("lokasi sudah didapat")
-        elif (pilihan == '2'):
-            portDistance = []
-            portDistance = copy.deepcopy(getUrutan())
-            print(portDistance)
-            sendDataInput()
-        elif(pilihan == '3'):
-            exit()
+                print("Silahkan masukkan pilihan yang tersedia")
+                print("gunakan 'help' untuk melihat daftar pilihan")

@@ -15,11 +15,11 @@ long_to = 112.797661
 
 
 port = 10003
-time_limit = 10
+time_limit = 30
 hop_limit = 1
 pesanDikirim = []
 
-def sendPosition():
+def sendLocation():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.settimeout(20)
     client.connect(('192.168.100.37', 35))
@@ -50,7 +50,6 @@ def multicast():
         rute = data[1]
         hop = data[2] + 1
         getSecond = time.time() - data[3]
-        timestamp = time.time()
         duration = data[4] + getSecond
         sock.sendto(b'ack', address)
         if(data[2] > hop_limit):
@@ -63,7 +62,7 @@ def multicast():
             print ('durasi pengiriman pesan : ' + str(data[4]))
             print ('jumlah hop : ' + str(data[2]))
             exit()
-        sendMsg(pesan,rute,hop,timestamp,duration)
+        sendMsg(pesan,rute,hop,data[3],duration)
 
 def sendMsg(pesan,rute,hop,timestamp,duration):
     p = rute[0][0]
@@ -72,15 +71,16 @@ def sendMsg(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(1,rute)
     pesanDikirim.insert(2,hop)
     pesanDikirim.insert(3,timestamp)
-    pesanDikirim.insert(4,duration)
-    settime = time.time()
+    settime = timestamp
     timecek = 0
     print('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
     while (timecek < time_limit):
         if hasil == 0:
+            pesanDikirim.insert(4,timecek)
             hasil = send(pesanDikirim, p)
         else:
+            print('pengiriman berhasil ke port ' + str(p))
             break
         timecek = time.time() - settime
     if hasil == 0:
@@ -113,12 +113,18 @@ if __name__ == '__main__':
         print("1. send lokasi")
         print("2. menerima pesan dan mengirimkan ke node selanjutnya")
         print("3. keluar")
-        inputan = raw_input('Pilihan > ')
-        if (inputan == '1'):
-            sendPosition()
-        elif (inputan == '2'):
+        pilihan = raw_input('Pilihan > ')
+        if (pilihan == '1'):
+            sendLocation()
+        elif (pilihan == '2'):
             multicast()
-        elif (inputan == '3'):
+        elif (pilihan == '3'):
             exit()
+        elif (pilihan == 'help'):
+            print("Pilihan yang tersedia:")
+            print("1. Kirim lokasi")
+            print("2. Terima dan lanjutkan pengiriman pesan")
+            print("3. Keluar")
         else:
-            print('inputan salah')
+            print("Silahkan masukkan pilihan yang tersedia")
+            print("gunakan 'help' untuk melihat daftar pilihan")
