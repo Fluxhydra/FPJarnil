@@ -74,6 +74,7 @@ def sendMsg(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(3,timestamp)
     settime = timestamp
     timecek = 0
+    pesanDikirim.insert(4, timecek)
     print('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
     while (timecek < time_limit):

@@ -50,6 +50,7 @@ def multicast():
         rute = data[1]
         hop = data[2] + 1
         getSecond = time.time() - data[3]
+        timestamp = time.time()
         duration = data[4] + getSecond
         sock.sendto(b'ack', address)
         if(data[2] > hop_limit):
@@ -62,6 +63,7 @@ def multicast():
             print ('durasi pengiriman pesan : ' + str(data[4]))
             print ('jumlah hop : ' + str(data[2]))
             exit()
+
         sendMsg(pesan,rute,hop,data[3],duration)
 
 def sendMsg(pesan,rute,hop,timestamp,duration):
@@ -73,6 +75,7 @@ def sendMsg(pesan,rute,hop,timestamp,duration):
     pesanDikirim.insert(3,timestamp)
     settime = timestamp
     timecek = 0
+    pesanDikirim.insert(4, timecek)
     print('mengirimkan pesan ke port ' + str(p))
     hasil = send(pesanDikirim, p)
     while (timecek < time_limit):
