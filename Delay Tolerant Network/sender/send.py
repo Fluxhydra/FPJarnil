@@ -74,6 +74,8 @@ def sendMessage():
         timecek = time.time() - settime
     if hasil == 0:
         print('Message lifetime limit reached, message will be deleted\n')
+        exit()
+        
 
 
 def send(message,port):

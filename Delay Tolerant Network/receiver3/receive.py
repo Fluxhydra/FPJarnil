@@ -88,6 +88,7 @@ def sendMsg(pesan,rute,hop,timestamp,duration):
         timecek = time.time() - settime
     if hasil == 0:
         print('Message lifetime limit reached, message will be deleted\n')
+        exit()
     else:
         exit()
 
