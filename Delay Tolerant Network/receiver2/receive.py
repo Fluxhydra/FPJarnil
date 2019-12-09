@@ -15,7 +15,7 @@ long_to = 112.572189
 
 port = 12002
 time_limit = 30
-hop_limit = 4
+hop_limit = 2
 pesanDikirim = []
 
 def sendLocation():
@@ -45,7 +45,7 @@ def multicast():
         data = json.loads(data.decode('utf-8'))
         print('Received %s bytes from %s' % (len(data), address))
         pesan = data[0]
-        print('Message : ' + pesan)
+        
         rute = data[1]
         hop = data[2] + 1
         getSecond = time.time() - data[3]
@@ -56,6 +56,7 @@ def multicast():
             print('Hop count: ' + str(hop))
             print('Hop count limit reached')
             exit()
+        print('Message : ' + pesan)
         if not data[1]:
             sock.sendto(b'ack', address)
             print ('Last DTN node in the route')
