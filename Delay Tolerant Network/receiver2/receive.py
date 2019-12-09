@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import socket
 import struct
 import sys
@@ -14,7 +13,7 @@ lat_to = -7.155029
 long_to = 112.572189
 
 port = 12002
-time_limit = 30
+time_limit = 1000
 hop_limit = 2
 pesanDikirim = []
 

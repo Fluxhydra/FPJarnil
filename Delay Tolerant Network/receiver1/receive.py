@@ -14,7 +14,7 @@ lat_to = -7.228549
 long_to = 112.731391
 
 port = 12001
-time_limit = 30
+time_limit = 1000
 hop_limit = 2
 pesanDikirim = []
 

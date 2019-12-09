@@ -17,7 +17,7 @@ from pip._vendor.distlib.compat import raw_input
 
 lat_from = -7.294080
 long_from = 112.801598
-time_limit = 30
+time_limit = 1000
 pesanDikirim = []
 portDistance = []
 portDistance_temp = []
