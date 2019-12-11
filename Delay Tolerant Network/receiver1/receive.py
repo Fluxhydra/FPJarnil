@@ -1,40 +1,39 @@
+# -*- coding: utf-8 -*-
 import socket
 import struct
 import sys
-import json
 import pickle
+import json
 import ast
 import time
 import os
-
+from geopy.distance import geodesic
 
 from pip._vendor.distlib.compat import raw_input
 
-lat_to = -7.228549
-long_to = 112.731391
+lat_to = -7.265441
+long_to = 112.797661
 
-port = 12001
-time_limit = 1000
-hop_limit = 2
+
+port = 15000
+nodeid='s1'
 pesanDikirim = []
 
-def sendLocation():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.settimeout(20)
-    client.connect(('10.151.254.214', 35))
-    data = {
-        'port' : port,
-        'lat' : lat_to,
-        'long' : long_to
-    }
-    client.send(pickle.dumps(data))
-    print('Location has been sent')
-    return client.close()
+def getDistance(lat_from,long_from):
+    coords_1 = (lat_from, long_from)
+    coords_2 = (lat_to, long_to)
+    return geodesic(coords_1, coords_2).km
+
+def compareDistance(distance,distance_limit):
+    if distance<distance_limit:
+        return 1
+    return 0
 
 def multicast():
     multicast_group = '224.3.29.71'
     server_address = ('', port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(server_address)
     group = socket.inet_aton(multicast_group)
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
@@ -45,56 +44,51 @@ def multicast():
         data = json.loads(data.decode('utf-8'))
         print('Received %s bytes from %s' % (len(data), address))
         pesan = data[0]
-        rute = data[1]
+        destination = data[1]
         hop = data[2] + 1
         getSecond = time.time() - data[3]
-        timestamp = time.time()
-        duration = data[4] + getSecond
         sock.sendto(b'ack', address)
-        if(hop > hop_limit):
+        distance = getDistance(data[5], data[6])
+        if (compareDistance(distance, data[9]) == 0):
+            print('Pesan tidak dapat dikirim, jarak melebihi batas')
+            break
+        elif (hop > data[7]):
             print('Hop count: ' + str(hop))
             print('Hop count limit reached')
-            exit()
-        
-        print('Message : ' + pesan)
-        if not data[1]:
+            break
+        elif (data[1] == nodeid):
+            print('Message : ' + pesan)
+            print('Last DTN node in the route')
+            print('Time elapsed: ' + str(data[4]))
+            print('Hop count: ' + str(hop))
             sock.sendto(b'ack', address)
-            print ('Last DTN node in the route')
-            print ('Time elapsed: ' + str(data[4]))
-            print ('Hop count: ' + str(hop))
-            exit()
+            break
+        send = sendMsg(pesan, destination, hop, data[3], data[4], data[5], data[6], data[7], data[8], data[9])
+        if send == 1:
+            break
 
-        sendMsg(pesan,rute,hop,data[3],duration)
-
-def sendMsg(pesan,rute,hop,timestamp,duration):
-    p = rute[0][0]
-    del rute[0]
-    pesanDikirim.insert(0,pesan)
-    pesanDikirim.insert(1,rute)
-    pesanDikirim.insert(2,hop)
-    pesanDikirim.insert(3,timestamp)
+def sendMsg(message,dest,hop,timestamp, source, lat_from,long_from,hop_limit,time_limit, distance_limit):
     settime = timestamp
     timecek = 0
-    pesanDikirim.insert(4, timecek)
-    print('Sending message to port ' + str(p))
-    hasil = send(pesanDikirim, p)
+    pesanDikirim = [message, dest, hop, time.time(), source, lat_from, long_from, hop_limit, time_limit,distance_limit]
+    print('Sending message to nodeid ' + str(dest))
+    hasil = send(pesanDikirim, port)
     while (timecek < time_limit):
+        print(pesanDikirim)
         if hasil == 0:
-            pesanDikirim.insert(4,timecek)
-            hasil = send(pesanDikirim, p)
+            hasil = send(pesanDikirim, port)
         else:
-            print('Message sent to port ' + str(p))
+            print('Message sent to nodeid ' + str(dest))
             break
         timecek = time.time() - settime
     if hasil == 0:
         print('Message lifetime limit reached, message will be deleted\n')
-        exit()
-    else:
-        exit()
+    return 1
 
 def send(message,port):
     multicast_group = ('224.3.29.71', port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.settimeout(0.2)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
@@ -111,17 +105,14 @@ def send(message,port):
             return 1
 
 if __name__ == '__main__':
-    print("[Receiver port " + str(port) + "]")
+    print("[Node ID " + str(nodeid) + "]")
     print("--------------------")
-    print("1. Send node location")
-    print("2. Receive and deliver message to next node")
-    print("3. Exit")
+    print("1. Receive and deliver message to next node")
+    print("2. Exit")
     while 1:
         print("\nYour choice?")
         pilihan = raw_input('>> ')
         if (pilihan == '1'):
-            sendLocation()
-        elif (pilihan == '2'):
             multicast()
-        elif (pilihan == '3'):
+        elif (pilihan == '2'):
             exit()
