@@ -15,7 +15,7 @@ lat_to = -7.265441
 long_to = 112.797661
 
 
-port = 15000
+port = 12346
 nodeid='s1'
 pesanDikirim = []
 
@@ -74,7 +74,6 @@ def sendMsg(message,dest,hop,timestamp, source, lat_from,long_from,hop_limit,tim
     print('Sending message to nodeid ' + str(dest))
     hasil = send(pesanDikirim, port)
     while (timecek < time_limit):
-        print(pesanDikirim)
         if hasil == 0:
             hasil = send(pesanDikirim, port)
         else:

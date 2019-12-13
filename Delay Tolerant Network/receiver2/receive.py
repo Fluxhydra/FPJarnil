@@ -15,7 +15,7 @@ lat_to = -7.228549
 long_to = 112.731391
 
 
-port = 15000
+port = 12346
 nodeid='s2'
 pesanDikirim = []
 
@@ -61,7 +61,7 @@ def multicast():
             print('Last DTN node in the route')
             print('Time elapsed: ' + str(data[4]))
             print('Hop count: ' + str(hop))
-            sock.sendto(b'ack')
+            sock.sendto(b'ack',address)
             break
         send = sendMsg(pesan, destination, hop, data[3], data[4], data[5], data[6], data[7], data[8], data[9])
         if send == 1:

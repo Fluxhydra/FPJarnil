@@ -15,7 +15,7 @@ lat_to = -7.155029
 long_to = 112.572189
 
 
-port = 15000
+port = 12346
 nodeid='s3'
 pesanDikirim = []
 

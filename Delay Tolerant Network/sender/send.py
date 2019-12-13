@@ -18,33 +18,24 @@ from pip._vendor.distlib.compat import raw_input
 lat_from = -7.294080
 long_from = 112.801598
 nodeid = 's0'
-port = 15000
+port = 12346
 
 def sendMessage():
-    message = raw_input("Input > ")
+    message = raw_input("Message > ")
     dest = raw_input("Destination > ")
     hop_limit = int(raw_input("Hop Limit > "))
     time_limit = int(raw_input("Time Limit(s) > "))
     distance_limit = int(raw_input("Distance limit(km) > "))
     pesanDikirim = [message, dest, 0, time.time(), nodeid, lat_from, long_from, hop_limit, time_limit, distance_limit]
-    # pesanDikirim.insert(0, message)
-    # pesanDikirim.insert(1, dest)
-    # pesanDikirim.insert(2, 0)
-    # pesanDikirim.insert(3, time.time())
-    # pesanDikirim.insert(5, nodeid)
-    # pesanDikirim.insert(6, lat_from)
-    # pesanDikirim.insert(7, long_from)
-    # pesanDikirim.insert(8, hop_limit)
-    # pesanDikirim.insert(9, time_limit)
     settime = time.time()
     timecek = 0
-    print('Sending message to port ' + str(port))
+    print('Sending message to nodeid ' + str(dest))
     hasil = send(pesanDikirim, port)
     while (timecek < time_limit):
         if hasil == 0:
             hasil = send(pesanDikirim, port)
         else:
-            print('Message sent to port ' + str(port))
+            print('Message sent to nodeid ' + str(dest))
             break
         timecek = time.time() - settime
     if hasil == 0:
@@ -79,7 +70,6 @@ def getDistance(lat_to,long_to):
 if __name__ == '__main__':
         print("[DTN Multicast: Node S]")
         print("--------------------")
-        path = 'location/'
         print("1. Create a new message")
         print("2. Exit")
         while 1:
